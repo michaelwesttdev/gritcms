@@ -52,23 +52,16 @@ export function DefaultHomePage() {
           {/* Product Hunt Badge */}
           <div className="mt-8 flex justify-center">
             <a
-              href="https://www.producthunt.com/products/gritcms?embed=true&utm_source=embed&utm_medium=post_embed"
+              href="https://www.producthunt.com/products/gritcms?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-gritcms"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 rounded-xl border border-border bg-white px-5 py-4 shadow-sm hover:shadow-md transition-shadow"
             >
               <img
-                alt="GritCMS"
-                src="https://ph-files.imgix.net/e9790cc8-8da3-4e42-b3f9-659b898aeaf4.png?auto=format&fit=crop&w=80&h=80"
-                className="w-12 h-12 rounded-lg object-cover shrink-0"
+                alt="GritCMS - Self-hosted all-in-one platform for creators | Product Hunt"
+                width="250"
+                height="54"
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1091457&theme=dark&t=1772886380956"
               />
-              <div className="text-left">
-                <p className="text-sm font-semibold text-gray-900">GritCMS</p>
-                <p className="text-xs text-gray-500">Self-hosted all-in-one platform for creators</p>
-              </div>
-              <span className="ml-2 inline-flex items-center gap-1 rounded-lg bg-[#ff6154] px-3 py-1.5 text-xs font-semibold text-white whitespace-nowrap">
-                Check it out →
-              </span>
             </a>
           </div>
 
