@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useEmailCampaigns, useDeleteEmailCampaign } from "@/hooks/use-email";
-import { Plus, Trash2, Pencil, Search, Loader2 } from "@/lib/icons";
+import { useEmailCampaigns, useDeleteEmailCampaign, useDuplicateEmailCampaign } from "@/hooks/use-email";
+import { Plus, Trash2, Pencil, Copy, Loader2 } from "@/lib/icons";
 import { useConfirm } from "@/hooks/use-confirm";
 
 const STATUSES = ["draft", "scheduled", "sending", "sent", "cancelled"] as const;
@@ -26,6 +26,7 @@ export default function CampaignsPage() {
     status: statusFilter || undefined,
   });
   const { mutate: deleteCampaign } = useDeleteEmailCampaign();
+  const { mutate: duplicateCampaign } = useDuplicateEmailCampaign();
   const confirm = useConfirm();
 
   const campaigns = data?.data ?? [];
@@ -116,9 +117,17 @@ export default function CampaignsPage() {
                       <Link
                         href={`/email/campaigns/${campaign.id}`}
                         className="rounded-lg p-1.5 text-text-muted hover:bg-bg-hover hover:text-foreground"
+                        title="Edit"
                       >
                         <Pencil className="h-4 w-4" />
                       </Link>
+                      <button
+                        onClick={() => duplicateCampaign(campaign.id)}
+                        className="rounded-lg p-1.5 text-text-muted hover:bg-bg-hover hover:text-foreground"
+                        title="Duplicate"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
                       {campaign.status !== "sending" && (
                         <button
                           onClick={async () => {

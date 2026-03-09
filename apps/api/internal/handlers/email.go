@@ -514,6 +514,40 @@ func (h *EmailHandler) DeleteCampaign(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Campaign deleted"})
 }
 
+// DuplicateCampaign creates a copy of an existing campaign as a draft.
+func (h *EmailHandler) DuplicateCampaign(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+	var original models.EmailCampaign
+	if err := h.DB.First(&original, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Campaign not found"})
+		return
+	}
+
+	dup := models.EmailCampaign{
+		TenantID:    1,
+		Name:        original.Name + " (Copy)",
+		Subject:     original.Subject,
+		TemplateID:  original.TemplateID,
+		FromName:    original.FromName,
+		FromEmail:   original.FromEmail,
+		ReplyTo:     original.ReplyTo,
+		HTMLContent: original.HTMLContent,
+		TextContent: original.TextContent,
+		ListIDs:     original.ListIDs,
+		SegmentIDs:  original.SegmentIDs,
+		TagIDs:      original.TagIDs,
+		Status:      models.CampaignStatusDraft,
+		Stats:       datatypes.JSON([]byte(`{"sent":0,"delivered":0,"opened":0,"clicked":0,"bounced":0,"unsubscribed":0}`)),
+	}
+
+	if err := h.DB.Create(&dup).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to duplicate campaign"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"data": dup})
+}
+
 // ScheduleCampaign sets a campaign to be sent at a specific time or immediately.
 func (h *EmailHandler) ScheduleCampaign(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))

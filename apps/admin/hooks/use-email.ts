@@ -305,6 +305,21 @@ export function useDeleteEmailCampaign() {
   });
 }
 
+export function useDuplicateEmailCampaign() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const { data } = await apiClient.post(`/api/email/campaigns/${id}/duplicate`);
+      return data.data as EmailCampaign;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["email-campaigns"] });
+      toast.success("Campaign duplicated");
+    },
+    onError: () => toast.error("Failed to duplicate campaign"),
+  });
+}
+
 export function useScheduleCampaign() {
   const qc = useQueryClient();
   return useMutation({

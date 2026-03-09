@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Check,
   ChevronRight,
@@ -118,6 +119,7 @@ export function SetupWizard() {
   });
   const [skippedEmail, setSkippedEmail] = useState(false);
   const { completeWizard } = useOnboarding();
+  const router = useRouter();
 
   const totalSteps = 4;
 
@@ -161,6 +163,7 @@ export function SetupWizard() {
     }
 
     completeWizard();
+    router.push("/");
   };
 
   const progressPercent = ((step + 1) / totalSteps) * 100;

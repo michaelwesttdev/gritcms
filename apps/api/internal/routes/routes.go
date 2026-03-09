@@ -462,6 +462,7 @@ func Setup(db *gorm.DB, cfg *config.Config, svc *Services) *gin.Engine {
 		admin.POST("/email/campaigns", emailHandler.CreateCampaign)
 		admin.PUT("/email/campaigns/:id", emailHandler.UpdateCampaign)
 		admin.DELETE("/email/campaigns/:id", emailHandler.DeleteCampaign)
+		admin.POST("/email/campaigns/:id/duplicate", emailHandler.DuplicateCampaign)
 		admin.POST("/email/campaigns/:id/schedule", emailHandler.ScheduleCampaign)
 		admin.GET("/email/campaigns/:id/stats", emailHandler.GetCampaignStats)
 
