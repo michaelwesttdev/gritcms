@@ -64,6 +64,14 @@ export function EmailEditor({ value, onChange, placeholder }: EmailEditorProps) 
                 return { style: attributes.style };
               },
             },
+            "data-cta": {
+              default: null,
+              parseHTML: (element: HTMLElement) => element.getAttribute("data-cta"),
+              renderHTML: (attributes: Record<string, any>) => {
+                if (!attributes["data-cta"]) return {};
+                return { "data-cta": attributes["data-cta"] };
+              },
+            },
           };
         },
       }).configure({
@@ -151,7 +159,7 @@ export function EmailEditor({ value, onChange, placeholder }: EmailEditorProps) 
   const handleCtaSubmit = useCallback(
     (text: string, url: string) => {
       if (!editor || !text || !url) return;
-      const ctaHtml = `<p style="text-align: center; margin: 24px 0;"><a href="${url}" style="display: inline-block; background-color: #6c5ce7; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">${text}</a></p>`;
+      const ctaHtml = `<p style="text-align: center; margin: 24px 0;"><a href="${url}" data-cta="true" style="display: inline-block; background-color: #6c5ce7; color: #ffffff; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">${text}</a></p>`;
       editor.chain().focus().insertContent(ctaHtml).run();
       setActiveModal(null);
     },

@@ -198,6 +198,18 @@ func handleCampaignProcess(deps WorkerDeps) func(ctx context.Context, task *asyn
 			return nil
 		}
 
+		// Load social settings for email footer
+		var socialSettings []models.Setting
+		deps.DB.Where("`group` = ? AND `key` LIKE ?", "theme", "social_%").Find(&socialSettings)
+		socials := map[string]string{}
+		for _, s := range socialSettings {
+			socials[s.Key] = s.Value
+		}
+		socialFooter := mail.BuildSocialFooter(socials)
+		if socialFooter != "" {
+			htmlContent += socialFooter
+		}
+
 		// Build "from" string
 		from := ""
 		if campaign.FromName != "" && campaign.FromEmail != "" {

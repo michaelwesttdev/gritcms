@@ -1501,8 +1501,19 @@ func (h *EmailHandler) SendTestEmail(c *gin.Context) {
 	// Replace unsubscribe placeholder with a no-op link for test emails
 	htmlContent = strings.ReplaceAll(htmlContent, "{{unsubscribe_url}}", "#")
 
-	// Transform editor HTML to email-safe HTML (YouTube iframes → thumbnails, strip classes)
+	// Transform editor HTML to email-safe HTML (YouTube iframes → thumbnails, CTA buttons, strip classes)
 	htmlContent = mail.PrepareEmailHTML(htmlContent)
+
+	// Append social media footer from settings
+	var socialSettings []models.Setting
+	h.DB.Where("`group` = ? AND `key` LIKE ?", "theme", "social_%").Find(&socialSettings)
+	socials := map[string]string{}
+	for _, s := range socialSettings {
+		socials[s.Key] = s.Value
+	}
+	if footer := mail.BuildSocialFooter(socials); footer != "" {
+		htmlContent += footer
+	}
 
 	_, err := h.Mailer.SendCampaignEmail(c.Request.Context(), mail.CampaignEmailOptions{
 		From:     from,

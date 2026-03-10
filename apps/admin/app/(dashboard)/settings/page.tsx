@@ -499,6 +499,12 @@ function SocialTab({
         onChange={(v) => onChange("social_youtube", v)}
         placeholder="https://youtube.com/@yourchannel"
       />
+      <Input
+        label="Instagram"
+        value={theme.social_instagram || ""}
+        onChange={(v) => onChange("social_instagram", v)}
+        placeholder="https://instagram.com/yourhandle"
+      />
     </div>
   );
 }
