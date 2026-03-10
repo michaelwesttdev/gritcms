@@ -55,7 +55,7 @@ func Setup(db *gorm.DB, cfg *config.Config, svc *Services) *gin.Engine {
 	r.MaxMultipartMemory = 50 << 20
 
 	// Mount Sentinel security suite (WAF, rate limiting, auth shield, anomaly detection)
-	excludedRoutes := []string{"/pulse/*", "/studio/*", "/sentinel/*", "/docs/*", "/api/health"}
+	excludedRoutes := []string{"/pulse/*", "/studio/*", "/sentinel/*", "/docs/*", "/api/health", "/api/email/campaigns/*", "/api/email/templates/*", "/api/website/pages/*", "/api/website/posts/*"}
 	if cfg.SentinelEnabled {
 		sentinel.Mount(r, db, sentinel.Config{
 			Dashboard: sentinel.DashboardConfig{
