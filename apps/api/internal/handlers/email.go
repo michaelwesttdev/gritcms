@@ -196,11 +196,23 @@ func (h *EmailHandler) Subscribe(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "Already subscribed"})
 			return
 		}
+		if existing.Status == models.SubStatusPending && list.DoubleOptin {
+			// Already pending — resend confirmation with the existing token
+			if existing.ConfirmToken == "" {
+				existing.ConfirmToken = generateToken()
+				h.DB.Save(&existing)
+			}
+			h.sendConfirmEmail(contact, list, existing.ConfirmToken)
+			c.JSON(http.StatusOK, gin.H{"message": "Please check your email to confirm your subscription", "confirm_required": true})
+			return
+		}
 		// Re-subscribe — respect double opt-in
 		now := time.Now()
 		if list.DoubleOptin {
 			existing.Status = models.SubStatusPending
-			existing.ConfirmToken = generateToken()
+			if existing.ConfirmToken == "" {
+				existing.ConfirmToken = generateToken()
+			}
 			existing.UnsubscribedAt = nil
 			h.DB.Save(&existing)
 			h.sendConfirmEmail(contact, list, existing.ConfirmToken)
@@ -255,10 +267,17 @@ func (h *EmailHandler) Subscribe(c *gin.Context) {
 func (h *EmailHandler) ConfirmSubscription(c *gin.Context) {
 	token := c.Param("token")
 	var sub models.EmailSubscription
-	if err := h.DB.Where("confirm_token = ? AND status = ?", token, models.SubStatusPending).First(&sub).Error; err != nil {
+	if err := h.DB.Where("confirm_token = ?", token).First(&sub).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Invalid or expired confirmation token"})
 		return
 	}
+
+	// Already confirmed
+	if sub.Status == models.SubStatusActive {
+		c.JSON(http.StatusOK, gin.H{"message": "Subscription already confirmed"})
+		return
+	}
+
 	now := time.Now()
 	sub.Status = models.SubStatusActive
 	sub.SubscribedAt = &now
@@ -379,7 +398,9 @@ func (h *EmailHandler) AdminAddSubscriber(c *gin.Context) {
 		now := time.Now()
 		if list.DoubleOptin {
 			existing.Status = models.SubStatusPending
-			existing.ConfirmToken = generateToken()
+			if existing.ConfirmToken == "" {
+				existing.ConfirmToken = generateToken()
+			}
 			existing.UnsubscribedAt = nil
 			h.DB.Save(&existing)
 			h.sendConfirmEmail(contact, list, existing.ConfirmToken)
