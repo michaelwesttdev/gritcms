@@ -158,7 +158,14 @@ func (h *EmailHandler) Subscribe(c *gin.Context) {
 		return
 	}
 
-	// Get or create contact
+	// Load list first to check double opt-in
+	var list models.EmailList
+	if err := h.DB.First(&list, body.ListID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "List not found"})
+		return
+	}
+
+	// Get or create contact, updating name if contact already exists
 	var contact models.Contact
 	result := h.DB.Where("email = ? AND tenant_id = ?", body.Email, 1).First(&contact)
 	if result.Error == gorm.ErrRecordNotFound {
@@ -171,6 +178,15 @@ func (h *EmailHandler) Subscribe(c *gin.Context) {
 			IPAddress: c.ClientIP(),
 		}
 		h.DB.Create(&contact)
+	} else if body.FirstName != "" || body.LastName != "" {
+		updates := map[string]interface{}{}
+		if body.FirstName != "" {
+			updates["first_name"] = body.FirstName
+		}
+		if body.LastName != "" {
+			updates["last_name"] = body.LastName
+		}
+		h.DB.Model(&contact).Updates(updates)
 	}
 
 	// Check if already subscribed
@@ -180,20 +196,25 @@ func (h *EmailHandler) Subscribe(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"message": "Already subscribed"})
 			return
 		}
-		// Re-subscribe
+		// Re-subscribe — respect double opt-in
 		now := time.Now()
-		existing.Status = models.SubStatusActive
-		existing.SubscribedAt = &now
-		existing.UnsubscribedAt = nil
-		h.DB.Save(&existing)
-		events.Emit(events.EmailSubscribed, existing)
-		c.JSON(http.StatusOK, gin.H{"message": "Subscribed successfully"})
+		if list.DoubleOptin {
+			existing.Status = models.SubStatusPending
+			existing.ConfirmToken = generateToken()
+			existing.UnsubscribedAt = nil
+			h.DB.Save(&existing)
+			h.sendConfirmEmail(contact, list, existing.ConfirmToken)
+			c.JSON(http.StatusOK, gin.H{"message": "Please check your email to confirm your subscription", "confirm_required": true})
+		} else {
+			existing.Status = models.SubStatusActive
+			existing.SubscribedAt = &now
+			existing.UnsubscribedAt = nil
+			h.DB.Save(&existing)
+			events.Emit(events.EmailSubscribed, existing)
+			c.JSON(http.StatusOK, gin.H{"message": "Subscribed successfully"})
+		}
 		return
 	}
-
-	// Check if list requires double opt-in
-	var list models.EmailList
-	h.DB.First(&list, body.ListID)
 
 	now := time.Now()
 	sub := models.EmailSubscription{
@@ -219,15 +240,8 @@ func (h *EmailHandler) Subscribe(c *gin.Context) {
 	}
 
 	// Send double opt-in confirmation email
-	if list.DoubleOptin && h.Jobs != nil {
-		confirmURL := fmt.Sprintf("%s/email/confirm/%s", strings.TrimRight(h.Cfg.WebURL, "/"), sub.ConfirmToken)
-		_ = h.Jobs.EnqueueSendEmail(body.Email, "Confirm your subscription", "subscription-confirm", map[string]interface{}{
-			"ConfirmURL": confirmURL,
-			"ListName":   list.Name,
-			"FirstName":  contact.FirstName,
-			"AppName":    h.Cfg.AppName,
-			"Year":       time.Now().Year(),
-		})
+	if list.DoubleOptin {
+		h.sendConfirmEmail(contact, list, sub.ConfirmToken)
 	}
 
 	msg := "Subscribed successfully"
@@ -328,6 +342,15 @@ func (h *EmailHandler) AdminAddSubscriber(c *gin.Context) {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create contact"})
 				return
 			}
+		} else if body.FirstName != "" || body.LastName != "" {
+			updates := map[string]interface{}{}
+			if body.FirstName != "" {
+				updates["first_name"] = body.FirstName
+			}
+			if body.LastName != "" {
+				updates["last_name"] = body.LastName
+			}
+			h.DB.Model(&contact).Updates(updates)
 		}
 		contactID = contact.ID
 	}
@@ -337,6 +360,14 @@ func (h *EmailHandler) AdminAddSubscriber(c *gin.Context) {
 		return
 	}
 
+	// Load list to check double opt-in
+	var list models.EmailList
+	h.DB.First(&list, listID)
+
+	// Resolve contact email for confirmation email
+	var contact models.Contact
+	h.DB.First(&contact, contactID)
+
 	// Check for existing subscription
 	var existing models.EmailSubscription
 	if err := h.DB.Where("contact_id = ? AND email_list_id = ?", contactID, listID).First(&existing).Error; err == nil {
@@ -344,13 +375,22 @@ func (h *EmailHandler) AdminAddSubscriber(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{"data": existing, "message": "Already subscribed"})
 			return
 		}
-		// Reactivate
+		// Reactivate — respect double opt-in
 		now := time.Now()
-		existing.Status = models.SubStatusActive
-		existing.SubscribedAt = &now
-		existing.UnsubscribedAt = nil
-		h.DB.Save(&existing)
-		c.JSON(http.StatusOK, gin.H{"data": existing})
+		if list.DoubleOptin {
+			existing.Status = models.SubStatusPending
+			existing.ConfirmToken = generateToken()
+			existing.UnsubscribedAt = nil
+			h.DB.Save(&existing)
+			h.sendConfirmEmail(contact, list, existing.ConfirmToken)
+			c.JSON(http.StatusOK, gin.H{"data": existing, "message": "Confirmation email sent"})
+		} else {
+			existing.Status = models.SubStatusActive
+			existing.SubscribedAt = &now
+			existing.UnsubscribedAt = nil
+			h.DB.Save(&existing)
+			c.JSON(http.StatusOK, gin.H{"data": existing})
+		}
 		return
 	}
 
@@ -359,15 +399,40 @@ func (h *EmailHandler) AdminAddSubscriber(c *gin.Context) {
 		TenantID:     1,
 		ContactID:    contactID,
 		EmailListID:  uint(listID),
-		Status:       models.SubStatusActive,
 		Source:       "manual",
 		SubscribedAt: &now,
+	}
+	if list.DoubleOptin {
+		sub.Status = models.SubStatusPending
+		sub.ConfirmToken = generateToken()
+	} else {
+		sub.Status = models.SubStatusActive
 	}
 	if err := h.DB.Create(&sub).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add subscriber"})
 		return
 	}
-	c.JSON(http.StatusCreated, gin.H{"data": sub})
+	if list.DoubleOptin {
+		h.sendConfirmEmail(contact, list, sub.ConfirmToken)
+		c.JSON(http.StatusCreated, gin.H{"data": sub, "message": "Confirmation email sent"})
+	} else {
+		c.JSON(http.StatusCreated, gin.H{"data": sub})
+	}
+}
+
+// sendConfirmEmail sends a double opt-in confirmation email.
+func (h *EmailHandler) sendConfirmEmail(contact models.Contact, list models.EmailList, token string) {
+	if h.Jobs == nil {
+		return
+	}
+	confirmURL := fmt.Sprintf("%s/email/confirm/%s", strings.TrimRight(h.Cfg.WebURL, "/"), token)
+	_ = h.Jobs.EnqueueSendEmail(contact.Email, "Confirm your subscription", "subscription-confirm", map[string]interface{}{
+		"ConfirmURL": confirmURL,
+		"ListName":   list.Name,
+		"FirstName":  contact.FirstName,
+		"AppName":    h.Cfg.AppName,
+		"Year":       time.Now().Year(),
+	})
 }
 
 // AdminRemoveSubscriber removes a subscriber from a list.
