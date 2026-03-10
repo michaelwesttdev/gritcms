@@ -296,6 +296,9 @@ func handleCampaignProcess(deps WorkerDeps) func(ctx context.Context, task *asyn
 			// Remove any remaining unsubscribe placeholders for non-list recipients
 			recipientHTML = strings.ReplaceAll(recipientHTML, "{{unsubscribe_url}}", "#")
 
+			// Transform editor HTML to email-safe HTML (YouTube iframes → thumbnails, strip classes)
+			recipientHTML = mail.PrepareEmailHTML(recipientHTML)
+
 			// Create EmailSend record
 			now := time.Now()
 			send := models.EmailSend{

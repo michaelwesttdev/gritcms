@@ -1501,6 +1501,9 @@ func (h *EmailHandler) SendTestEmail(c *gin.Context) {
 	// Replace unsubscribe placeholder with a no-op link for test emails
 	htmlContent = strings.ReplaceAll(htmlContent, "{{unsubscribe_url}}", "#")
 
+	// Transform editor HTML to email-safe HTML (YouTube iframes → thumbnails, strip classes)
+	htmlContent = mail.PrepareEmailHTML(htmlContent)
+
 	_, err := h.Mailer.SendCampaignEmail(c.Request.Context(), mail.CampaignEmailOptions{
 		From:     from,
 		To:       body.Email,

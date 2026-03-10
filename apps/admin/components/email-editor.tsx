@@ -52,7 +52,21 @@ export function EmailEditor({ value, onChange, placeholder }: EmailEditorProps) 
         heading: { levels: [1, 2, 3] },
         horizontalRule: {},
       }),
-      Link.configure({
+      Link.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            style: {
+              default: null,
+              parseHTML: (element: HTMLElement) => element.getAttribute("style"),
+              renderHTML: (attributes: Record<string, any>) => {
+                if (!attributes.style) return {};
+                return { style: attributes.style };
+              },
+            },
+          };
+        },
+      }).configure({
         openOnClick: false,
         HTMLAttributes: { class: "text-accent underline" },
       }),
