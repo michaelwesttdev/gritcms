@@ -21,7 +21,7 @@ type PremiumGuide struct {
 	Description string         `gorm:"type:text" json:"description"`
 	CoverImage  string         `gorm:"size:500" json:"cover_image"`
 	PdfUrl      string         `gorm:"size:500" json:"pdf_url"`
-	EmailListID uint           `gorm:"index" json:"email_list_id"`
+	EmailListID *uint          `gorm:"index" json:"email_list_id"`
 	Status      string         `gorm:"size:20;default:'draft';index" json:"status"`
 	SortOrder   int            `gorm:"default:0" json:"sort_order"`
 	CreatedAt   time.Time      `json:"created_at"`

@@ -214,7 +214,10 @@ func (h *GuideHandler) CheckGuideAccess(c *gin.Context) {
 		return
 	}
 
-	hasAccess := h.checkSubscription(email, guide.EmailListID)
+	var hasAccess bool
+	if guide.EmailListID != nil && *guide.EmailListID > 0 {
+		hasAccess = h.checkSubscription(email, *guide.EmailListID)
+	}
 
 	resp := gin.H{
 		"has_access": hasAccess,
@@ -250,7 +253,7 @@ func (h *GuideHandler) DownloadGuide(c *gin.Context) {
 		return
 	}
 
-	if !h.checkSubscription(email, guide.EmailListID) {
+	if guide.EmailListID == nil || !h.checkSubscription(email, *guide.EmailListID) {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Subscription required"})
 		return
 	}
