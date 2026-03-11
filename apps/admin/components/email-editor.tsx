@@ -759,8 +759,9 @@ function GuideModal({
   }, []);
 
   const selectedGuide = guides.find((g) => g.slug === selectedSlug);
+  const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "";
   const guideUrl = selectedSlug
-    ? `/guides/${selectedSlug}?e={{subscriber_email_b64}}`
+    ? `${webUrl}/guides/${selectedSlug}?e={{subscriber_email_b64}}`
     : "";
 
   return (
