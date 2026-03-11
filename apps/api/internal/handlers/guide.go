@@ -258,15 +258,39 @@ func (h *GuideHandler) DownloadGuide(c *gin.Context) {
 		return
 	}
 
-	// Record download
+	// Record download with referrer
+	ref := c.Query("ref")
+	if ref == "" {
+		ref = "direct"
+	}
 	download := models.GuideDownload{
 		GuideID:   guide.ID,
 		Email:     email,
+		Referrer:  ref,
 		IPAddress: c.ClientIP(),
 	}
 	h.db.Create(&download)
 
 	c.Redirect(http.StatusFound, guide.PdfUrl)
+}
+
+// GetGuideReferrals returns referral breakdown for a guide (admin).
+func (h *GuideHandler) GetGuideReferrals(c *gin.Context) {
+	id := c.Param("id")
+
+	type ReferralStat struct {
+		Referrer string `json:"referrer"`
+		Count    int64  `json:"count"`
+	}
+	var stats []ReferralStat
+	h.db.Model(&models.GuideDownload{}).
+		Select("referrer, count(*) as count").
+		Where("guide_id = ?", id).
+		Group("referrer").
+		Order("count DESC").
+		Scan(&stats)
+
+	c.JSON(http.StatusOK, gin.H{"data": stats})
 }
 
 // ===================== HELPERS =====================

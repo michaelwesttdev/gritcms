@@ -38,6 +38,7 @@ type GuideDownload struct {
 	ID        uint      `gorm:"primarykey" json:"id"`
 	GuideID   uint      `gorm:"index;not null" json:"guide_id"`
 	Email     string    `gorm:"size:255;not null" json:"email"`
+	Referrer  string    `gorm:"size:100;index" json:"referrer"` // linkedin, twitter, email, direct, etc.
 	IPAddress string    `gorm:"size:45" json:"ip_address"`
 	CreatedAt time.Time `json:"created_at"`
 }

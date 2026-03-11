@@ -15,8 +15,9 @@ export default function GuideDetailPage() {
 
   const { data: guide, isLoading: guideLoading } = usePublicGuide(slug);
 
-  // Check for email in URL (from newsletter link)
+  // Check for email and referrer in URL
   const urlEmail = searchParams.get("e") || "";
+  const ref = searchParams.get("ref") || "direct";
 
   const [emailInput, setEmailInput] = useState("");
   const [emailB64, setEmailB64] = useState(urlEmail);
@@ -59,7 +60,7 @@ export default function GuideDetailPage() {
     );
   }
 
-  const downloadUrl = `${API_URL}/api/p/guides/${slug}/download?e=${encodeURIComponent(emailB64)}`;
+  const downloadUrl = `${API_URL}/api/p/guides/${slug}/download?e=${encodeURIComponent(emailB64)}&ref=${encodeURIComponent(ref)}`;
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-16">

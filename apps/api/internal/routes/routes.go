@@ -786,6 +786,7 @@ func Setup(db *gorm.DB, cfg *config.Config, svc *Services) *gin.Engine {
 		admin.POST("/guides", guideHandler.CreateGuide)
 		admin.PUT("/guides/:id", guideHandler.UpdateGuide)
 		admin.DELETE("/guides/:id", guideHandler.DeleteGuide)
+		admin.GET("/guides/:id/referrals", guideHandler.GetGuideReferrals)
 
 		// grit:routes:admin
 	}

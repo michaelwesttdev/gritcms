@@ -70,3 +70,14 @@ export function useDeleteGuide() {
     onError: () => toast.error("Failed to delete guide"),
   });
 }
+
+export function useGuideReferrals(id: number) {
+  return useQuery({
+    queryKey: ["guides", id, "referrals"],
+    queryFn: async () => {
+      const { data } = await apiClient.get(`/api/guides/${id}/referrals`);
+      return data.data as { referrer: string; count: number }[];
+    },
+    enabled: id > 0,
+  });
+}

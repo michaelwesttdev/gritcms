@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useGuide, useUpdateGuide, useDeleteGuide } from "@/hooks/use-guides";
+import { useGuide, useUpdateGuide, useDeleteGuide, useGuideReferrals } from "@/hooks/use-guides";
 import { useEmailLists } from "@/hooks/use-email";
 import { uploadFile } from "@/lib/api-client";
 import {
@@ -15,6 +15,10 @@ import {
   FileText,
   Download,
   Image as ImageIcon,
+  Copy,
+  Check,
+  ExternalLink,
+  BarChart3,
 } from "@/lib/icons";
 import { useConfirm } from "@/hooks/use-confirm";
 
@@ -28,6 +32,7 @@ export default function GuideEditPage() {
   const { data: emailLists } = useEmailLists();
   const { mutate: updateGuide, isPending: saving } = useUpdateGuide();
   const { mutate: deleteGuide } = useDeleteGuide();
+  const { data: referrals } = useGuideReferrals(id);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -37,6 +42,8 @@ export default function GuideEditPage() {
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [sortOrder, setSortOrder] = useState(0);
   const [initialized, setInitialized] = useState(false);
+
+  const [copied, setCopied] = useState("");
 
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
@@ -351,9 +358,72 @@ export default function GuideEditPage() {
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Shareable Links */}
           <div className="rounded-xl border border-border bg-bg-secondary p-4 space-y-3">
-            <h3 className="font-medium text-foreground">Stats</h3>
+            <div className="flex items-center gap-2">
+              <ExternalLink className="h-4 w-4 text-accent" />
+              <h3 className="font-medium text-foreground">Share Link</h3>
+            </div>
+
+            {guide.status === "published" ? (
+              <>
+                {/* Base URL */}
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={`${typeof window !== "undefined" ? window.location.origin.replace("admin.", "") : ""}/guides/${guide.slug}`}
+                    className="flex-1 rounded-lg border border-border bg-bg-primary px-3 py-2 text-xs text-text-secondary truncate"
+                  />
+                  <button
+                    onClick={() => {
+                      const url = `${window.location.origin.replace("admin.", "")}/guides/${guide.slug}`;
+                      navigator.clipboard.writeText(url);
+                      setCopied("base");
+                      setTimeout(() => setCopied(""), 2000);
+                    }}
+                    className="rounded-lg border border-border p-2 text-text-muted hover:bg-bg-hover hover:text-foreground transition-colors flex-shrink-0"
+                    title="Copy link"
+                  >
+                    {copied === "base" ? <Check className="h-4 w-4 text-green-400" /> : <Copy className="h-4 w-4" />}
+                  </button>
+                </div>
+
+                {/* Social links with ref tracking */}
+                <p className="text-xs text-text-muted">Copy with referral tracking:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: "LinkedIn", ref: "linkedin", color: "bg-blue-600/10 text-blue-400 hover:bg-blue-600/20" },
+                    { label: "X / Twitter", ref: "twitter", color: "bg-zinc-600/10 text-zinc-300 hover:bg-zinc-600/20" },
+                    { label: "Facebook", ref: "facebook", color: "bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600/20" },
+                    { label: "YouTube", ref: "youtube", color: "bg-red-600/10 text-red-400 hover:bg-red-600/20" },
+                  ].map((social) => (
+                    <button
+                      key={social.ref}
+                      onClick={() => {
+                        const url = `${window.location.origin.replace("admin.", "")}/guides/${guide.slug}?ref=${social.ref}`;
+                        navigator.clipboard.writeText(url);
+                        setCopied(social.ref);
+                        setTimeout(() => setCopied(""), 2000);
+                      }}
+                      className={`flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${social.color}`}
+                    >
+                      {copied === social.ref ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copied === social.ref ? "Copied!" : social.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-text-muted">Publish the guide to get a shareable link.</p>
+            )}
+          </div>
+
+          {/* Stats + Referrals */}
+          <div className="rounded-xl border border-border bg-bg-secondary p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-accent" />
+              <h3 className="font-medium text-foreground">Stats</h3>
+            </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-text-muted">Downloads</span>
               <span className="font-medium text-foreground">{guide.download_count ?? 0}</span>
@@ -366,6 +436,35 @@ export default function GuideEditPage() {
               <span className="text-text-muted">Slug</span>
               <span className="text-text-secondary text-xs">{guide.slug}</span>
             </div>
+
+            {/* Referral breakdown */}
+            {referrals && referrals.length > 0 && (
+              <>
+                <div className="border-t border-border pt-3 mt-3">
+                  <p className="text-xs font-medium text-text-muted mb-2">Traffic Sources</p>
+                  <div className="space-y-2">
+                    {referrals.map((r) => {
+                      const total = referrals.reduce((sum, x) => sum + x.count, 0);
+                      const pct = total > 0 ? Math.round((r.count / total) * 100) : 0;
+                      return (
+                        <div key={r.referrer}>
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-text-secondary capitalize">{r.referrer}</span>
+                            <span className="text-text-muted">{r.count} ({pct}%)</span>
+                          </div>
+                          <div className="h-1.5 rounded-full bg-bg-hover overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-accent transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
