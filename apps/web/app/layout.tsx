@@ -28,8 +28,23 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "gritcms — Go + React. Built with Grit.",
-  description: "A full-stack framework that combines Go backend with Next.js frontend. Build fast, ship faster.",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  ),
+  title: {
+    default: "gritcms — Go + React. Built with Grit.",
+    template: "%s | gritcms",
+  },
+  description:
+    "A full-stack framework that combines Go backend with Next.js frontend. Build fast, ship faster.",
+  openGraph: {
+    type: "website",
+    siteName: "gritcms",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

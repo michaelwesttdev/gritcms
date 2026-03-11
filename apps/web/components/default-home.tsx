@@ -1,8 +1,94 @@
 "use client";
 
-import { ArrowRight, Clock } from "lucide-react";
+import {
+  ArrowRight,
+  Clock,
+  Globe,
+  Mail,
+  BookOpen,
+  ShoppingBag,
+  MessageCircle,
+  Layers,
+  CalendarCheck,
+  Users,
+  Zap,
+  BookMarked,
+} from "lucide-react";
 import Link from "next/link";
 import { usePublicPosts } from "@/hooks/use-website";
+
+const FEATURES = [
+  {
+    icon: Globe,
+    title: "Website Builder",
+    description:
+      "Visual page builder with drag-and-drop sections, blog, SEO, and custom pages.",
+    color: "#3b82f6",
+  },
+  {
+    icon: Mail,
+    title: "Email Marketing",
+    description:
+      "Lists, campaigns, templates, automations, and subscriber management.",
+    color: "#8b5cf6",
+  },
+  {
+    icon: BookOpen,
+    title: "Course Platform",
+    description:
+      "Modules, lessons, video/audio/PDF content, enrollment, certificates, and progress tracking.",
+    color: "#10b981",
+  },
+  {
+    icon: ShoppingBag,
+    title: "Products & Commerce",
+    description:
+      "Digital and physical products, Stripe payments, subscriptions, coupons, and orders.",
+    color: "#f59e0b",
+  },
+  {
+    icon: MessageCircle,
+    title: "Community",
+    description:
+      "Discussion spaces, threads, replies, reactions, events, and member management.",
+    color: "#ec4899",
+  },
+  {
+    icon: Users,
+    title: "Contacts CRM",
+    description:
+      "Contact database, tagging, segmentation, activity timeline, and analytics dashboard.",
+    color: "#06b6d4",
+  },
+  {
+    icon: Layers,
+    title: "Sales Funnels",
+    description:
+      "Multi-step funnel builder with landing, sales, checkout, upsell, and thank-you pages.",
+    color: "#f97316",
+  },
+  {
+    icon: CalendarCheck,
+    title: "Booking & Scheduling",
+    description:
+      "Calendars, event types, availability rules, and a public booking widget.",
+    color: "#14b8a6",
+  },
+  {
+    icon: BookMarked,
+    title: "Premium Guides",
+    description:
+      "Gated PDF guides for subscribers with download tracking and referral analytics.",
+    color: "#a855f7",
+  },
+  {
+    icon: Zap,
+    title: "Workflow Automation",
+    description:
+      "Event-driven automations, AI actions, and multi-step workflows.",
+    color: "#eab308",
+  },
+];
 
 const DOCS_URL = "https://grit-vert.vercel.app/docs";
 
@@ -25,9 +111,9 @@ export function DefaultHomePage() {
           </h1>
 
           <p className="mt-6 text-lg text-text-secondary leading-relaxed max-w-lg mx-auto">
-            The full-stack meta-framework that fuses Go, React, and a
-            Filament-like admin panel. Scaffold entire projects, generate
-            resources, and ship fast.
+            The self-hostable Creator Operating System. Website builder, email
+            marketing, courses, commerce, community, booking, funnels &amp; more
+            &mdash; all in one Go + React stack.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -79,6 +165,42 @@ export function DefaultHomePage() {
               <p><span className="text-success select-none">$ </span><span className="text-foreground">pnpm dev</span></p>
               <p className="text-success pt-1">Ready on http://localhost:3000</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="border-t border-border/50">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl font-bold tracking-tight">
+              Everything you need to build, grow &amp; monetize
+            </h2>
+            <p className="mt-3 text-text-secondary max-w-xl mx-auto">
+              One self-hosted platform replaces a dozen SaaS subscriptions. Own your data, own your audience.
+            </p>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {FEATURES.map((f) => (
+              <div
+                key={f.title}
+                className="rounded-xl border border-border bg-bg-elevated p-5 hover:border-accent/30 hover:shadow-lg hover:shadow-accent/5 transition-all duration-300"
+              >
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-lg mb-4"
+                  style={{ backgroundColor: `${f.color}15`, color: f.color }}
+                >
+                  <f.icon className="h-5 w-5" />
+                </div>
+                <h3 className="font-semibold text-foreground text-sm">
+                  {f.title}
+                </h3>
+                <p className="mt-1.5 text-xs text-text-secondary leading-relaxed">
+                  {f.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

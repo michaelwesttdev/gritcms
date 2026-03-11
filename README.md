@@ -14,6 +14,7 @@ Built with **Go** (Gin + GORM) backend and **Next.js** (App Router) frontend in 
 - **Community** — Spaces, threads, replies, reactions, events, member management
 - **Sales Funnels** — Multi-step funnels (opt-in, sales, webinar, launch), visit/conversion tracking
 - **Booking Calendar** — Calendars, event types, availability, appointments, public booking
+- **Premium Guides** — Gated PDF guides for subscribers, download tracking, referral analytics
 - **Affiliate Management** — Programs, affiliates, referral links, commissions, payouts
 - **Workflow Automation** — Visual workflow builder, triggers, actions, execution logs
 - **AI Assist** — Content generation, email subjects, SEO descriptions, course summaries
@@ -459,6 +460,8 @@ All admin endpoints require JWT authentication via `Authorization: Bearer <token
 - `GET /api/community/spaces` — Public community spaces
 - `GET /api/funnels/:slug` — Public funnel pages
 - `GET /api/book/:slug` — Public booking page
+- `GET /api/guides` — Published premium guides
+- `GET /api/guides/:slug` — Guide detail with access gate
 - `GET /api/ref/:code` — Affiliate referral tracking
 
 ### Admin Routes (`/api/admin/...`)
