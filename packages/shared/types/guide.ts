@@ -10,6 +10,7 @@ export interface PremiumGuide {
   status: "draft" | "published";
   sort_order: number;
   download_count: number;
+  view_count: number;
   email_list?: { id: number; name: string };
   created_at: string;
   updated_at: string;

@@ -30,6 +30,7 @@ type PremiumGuide struct {
 
 	EmailList     EmailList `gorm:"foreignKey:EmailListID" json:"email_list,omitempty"`
 	DownloadCount int64     `gorm:"-" json:"download_count"`
+	ViewCount     int64     `gorm:"-" json:"view_count"`
 }
 
 // --- Guide Downloads (tracking) ---
@@ -39,6 +40,16 @@ type GuideDownload struct {
 	GuideID   uint      `gorm:"index;not null" json:"guide_id"`
 	Email     string    `gorm:"size:255;not null" json:"email"`
 	Referrer  string    `gorm:"size:100;index" json:"referrer"` // linkedin, twitter, email, direct, etc.
+	IPAddress string    `gorm:"size:45" json:"ip_address"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// --- Guide Views (tracking) ---
+
+type GuideView struct {
+	ID        uint      `gorm:"primarykey" json:"id"`
+	GuideID   uint      `gorm:"index;not null" json:"guide_id"`
+	Referrer  string    `gorm:"size:100;index" json:"referrer"`
 	IPAddress string    `gorm:"size:45" json:"ip_address"`
 	CreatedAt time.Time `json:"created_at"`
 }

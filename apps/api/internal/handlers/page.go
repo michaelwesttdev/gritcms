@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"context"
+	"crypto/sha256"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -11,18 +14,29 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
+	"gritcms/apps/api/internal/cache"
 	"gritcms/apps/api/internal/events"
 	"gritcms/apps/api/internal/models"
 )
 
 // PageHandler handles page CRUD operations.
 type PageHandler struct {
-	DB *gorm.DB
+	DB    *gorm.DB
+	Cache *cache.Cache
 }
 
 // NewPageHandler creates a new PageHandler.
-func NewPageHandler(db *gorm.DB) *PageHandler {
-	return &PageHandler{DB: db}
+func NewPageHandler(db *gorm.DB, c *cache.Cache) *PageHandler {
+	return &PageHandler{DB: db, Cache: c}
+}
+
+// invalidatePageCache removes the cached public response for the given page slug.
+func (h *PageHandler) invalidatePageCache(slug string) {
+	if h.Cache == nil || slug == "" {
+		return
+	}
+	key := fmt.Sprintf("http:%x", sha256.Sum256([]byte("/api/p/pages/"+slug)))
+	_ = h.Cache.Delete(context.Background(), key)
 }
 
 // List returns a paginated list of pages with search, filter, and sort.
@@ -296,10 +310,18 @@ func (h *PageHandler) Update(c *gin.Context) {
 		}
 	}
 
+	oldSlug := pg.Slug
+
 	h.DB.Model(&pg).Updates(updates)
 	h.DB.Preload("Author", func(db *gorm.DB) *gorm.DB {
 		return db.Select("id, first_name, last_name, avatar")
 	}).First(&pg, pg.ID)
+
+	// Invalidate public page cache for old and (possibly new) slug
+	h.invalidatePageCache(oldSlug)
+	if pg.Slug != oldSlug {
+		h.invalidatePageCache(pg.Slug)
+	}
 
 	if req.Status != nil && *req.Status == models.PageStatusPublished && !wasPublished {
 		events.Emit(events.PagePublished, pg)
@@ -331,6 +353,9 @@ func (h *PageHandler) Delete(c *gin.Context) {
 	}
 
 	h.DB.Delete(&pg)
+
+	// Invalidate public page cache
+	h.invalidatePageCache(pg.Slug)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Page deleted successfully",

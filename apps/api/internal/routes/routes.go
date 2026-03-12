@@ -189,7 +189,7 @@ func Setup(db *gorm.DB, cfg *config.Config, svc *Services) *gin.Engine {
 	blogHandler := handlers.NewBlogHandler(db)
 	contactHandler := handlers.NewContactHandler(db, svc.Mailer, svc.Jobs)
 	mediaHandler := handlers.NewMediaHandler(db, svc.Storage, svc.Jobs)
-	pageHandler := handlers.NewPageHandler(db)
+	pageHandler := handlers.NewPageHandler(db, svc.Cache)
 	postHandler := handlers.NewPostHandler(db)
 	menuHandler := handlers.NewMenuHandler(db)
 	settingHandler := handlers.NewSettingHandler(db)
@@ -266,6 +266,7 @@ func Setup(db *gorm.DB, cfg *config.Config, svc *Services) *gin.Engine {
 	r.GET("/api/p/guides/:slug", publicCache, guideHandler.GetPublicGuide)
 	r.GET("/api/p/guides/:slug/access", guideHandler.CheckGuideAccess)
 	r.GET("/api/p/guides/:slug/download", guideHandler.DownloadGuide)
+	r.POST("/api/p/guides/:slug/view", guideHandler.TrackGuideView)
 
 	// Public funnel routes (cached)
 	r.GET("/api/p/funnels/:slug", publicCache, funnelHandler.GetPublicFunnel)

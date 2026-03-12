@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Download, Lock, Mail, Loader2, BookMarked } from "lucide-react";
-import { usePublicGuide, useGuideAccess } from "@/hooks/use-guides";
+import { usePublicGuide, useGuideAccess, useTrackGuideView } from "@/hooks/use-guides";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -15,9 +15,12 @@ export default function GuideDetailPage() {
 
   const { data: guide, isLoading: guideLoading } = usePublicGuide(slug);
 
+  // Track page view
+  const ref = searchParams.get("ref") || "direct";
+  useTrackGuideView(slug, ref);
+
   // Check for email and referrer in URL
   const urlEmail = searchParams.get("e") || "";
-  const ref = searchParams.get("ref") || "direct";
 
   const [emailInput, setEmailInput] = useState("");
   const [emailB64, setEmailB64] = useState(urlEmail);

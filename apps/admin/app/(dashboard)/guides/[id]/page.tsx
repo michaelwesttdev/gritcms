@@ -425,6 +425,10 @@ export default function GuideEditPage() {
               <h3 className="font-medium text-foreground">Stats</h3>
             </div>
             <div className="flex items-center justify-between text-sm">
+              <span className="text-text-muted">Views</span>
+              <span className="font-medium text-foreground">{guide.view_count ?? 0}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
               <span className="text-text-muted">Downloads</span>
               <span className="font-medium text-foreground">{guide.download_count ?? 0}</span>
             </div>

@@ -43,6 +43,7 @@ func (h *GuideHandler) ListGuides(c *gin.Context) {
 
 	for i := range guides {
 		h.db.Model(&models.GuideDownload{}).Where("guide_id = ?", guides[i].ID).Count(&guides[i].DownloadCount)
+		h.db.Model(&models.GuideView{}).Where("guide_id = ?", guides[i].ID).Count(&guides[i].ViewCount)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -64,6 +65,7 @@ func (h *GuideHandler) GetGuide(c *gin.Context) {
 		return
 	}
 	h.db.Model(&models.GuideDownload{}).Where("guide_id = ?", guide.ID).Count(&guide.DownloadCount)
+	h.db.Model(&models.GuideView{}).Where("guide_id = ?", guide.ID).Count(&guide.ViewCount)
 	c.JSON(http.StatusOK, gin.H{"data": guide})
 }
 
@@ -107,6 +109,7 @@ func (h *GuideHandler) UpdateGuide(c *gin.Context) {
 	}
 	h.db.Preload("EmailList").First(&guide, id)
 	h.db.Model(&models.GuideDownload{}).Where("guide_id = ?", guide.ID).Count(&guide.DownloadCount)
+	h.db.Model(&models.GuideView{}).Where("guide_id = ?", guide.ID).Count(&guide.ViewCount)
 	c.JSON(http.StatusOK, gin.H{"data": guide})
 }
 
@@ -291,6 +294,31 @@ func (h *GuideHandler) GetGuideReferrals(c *gin.Context) {
 		Scan(&stats)
 
 	c.JSON(http.StatusOK, gin.H{"data": stats})
+}
+
+// TrackGuideView records a page view for a guide (public, fire-and-forget).
+func (h *GuideHandler) TrackGuideView(c *gin.Context) {
+	slug := c.Param("slug")
+
+	var guide models.PremiumGuide
+	if err := h.db.Select("id").Where("slug = ? AND status = ?", slug, models.GuideStatusPublished).First(&guide).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Guide not found"})
+		return
+	}
+
+	ref := c.Query("ref")
+	if ref == "" {
+		ref = "direct"
+	}
+
+	view := models.GuideView{
+		GuideID:   guide.ID,
+		Referrer:  ref,
+		IPAddress: c.ClientIP(),
+	}
+	h.db.Create(&view)
+
+	c.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
 // ===================== HELPERS =====================

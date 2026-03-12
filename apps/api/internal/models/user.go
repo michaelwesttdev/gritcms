@@ -145,6 +145,7 @@ func Models() []interface{} {
 		&WorkflowExecution{},
 		&PremiumGuide{},
 		&GuideDownload{},
+		&GuideView{},
 		// grit:models
 	}
 }

@@ -36,6 +36,7 @@ export default function GuidesPage() {
 
   const totalGuides = meta?.total ?? guides.length;
   const publishedCount = guides.filter((g) => g.status === "published").length;
+  const totalViews = guides.reduce((sum, g) => sum + (g.view_count ?? 0), 0);
   const totalDownloads = guides.reduce((sum, g) => sum + (g.download_count ?? 0), 0);
 
   function handleCreate() {
@@ -72,7 +73,7 @@ export default function GuidesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-bg-secondary p-4">
           <p className="text-sm text-text-muted">Total Guides</p>
           <p className="text-2xl font-bold text-foreground mt-1">{totalGuides}</p>
@@ -80,6 +81,10 @@ export default function GuidesPage() {
         <div className="rounded-xl border border-border bg-bg-secondary p-4">
           <p className="text-sm text-text-muted">Published</p>
           <p className="text-2xl font-bold text-green-400 mt-1">{publishedCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-bg-secondary p-4">
+          <p className="text-sm text-text-muted">Total Views</p>
+          <p className="text-2xl font-bold text-blue-400 mt-1">{totalViews}</p>
         </div>
         <div className="rounded-xl border border-border bg-bg-secondary p-4">
           <p className="text-sm text-text-muted">Total Downloads</p>
@@ -105,6 +110,7 @@ export default function GuidesPage() {
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Email List</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium text-right">Views</th>
                 <th className="px-4 py-3 font-medium text-right">Downloads</th>
                 <th className="px-4 py-3 font-medium">Created</th>
                 <th className="px-4 py-3 font-medium text-right">Actions</th>
@@ -131,6 +137,12 @@ export default function GuidesPage() {
                       }`}
                     >
                       {guide.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right text-text-secondary">
+                    <span className="inline-flex items-center gap-1">
+                      <Eye className="h-3.5 w-3.5" />
+                      {guide.view_count ?? 0}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right text-text-secondary">

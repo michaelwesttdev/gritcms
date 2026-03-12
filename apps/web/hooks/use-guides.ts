@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { PremiumGuide } from "@repo/shared/types";
@@ -46,4 +47,14 @@ export function useGuideAccess(slug: string, emailB64: string) {
     },
     enabled: !!slug && !!emailB64,
   });
+}
+
+/** Fire-and-forget view tracking — runs once per slug per mount. */
+export function useTrackGuideView(slug: string, ref: string = "direct") {
+  const tracked = useRef(false);
+  useEffect(() => {
+    if (!slug || tracked.current) return;
+    tracked.current = true;
+    api.post(`/api/p/guides/${slug}/view?ref=${encodeURIComponent(ref)}`).catch(() => {});
+  }, [slug, ref]);
 }
